@@ -5,27 +5,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Chat App</title>
+  <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
   <header>
-    <div>This is a chat app!!</div>
+    <h1>Welcome!!</h1>
   </header>
-  <div>
-    <label for="username">Username</label>
-    <input type="text" id='username'>
-    <button id='btn'>Verify and Enter</button>
+  <div id="verify">
+    <form>
+      <h3>Please enter your name</h3>
+      <label for="username">Username: </label>
+      <input type="text" id='username'>
+      <button id='btn' type="submit">Verify and Enter</button>
+    </form>
   </div>
+  <div id="message">
+
+  </div>
+  <div id="send-msg">
+    <form>
+      <input type="text" id='msg-body'>
+      <button id="submit-btn" type="submit">Send</button>
+    </form>
+  </div>
+  <script
+			  src="https://code.jquery.com/jquery-3.2.1.min.js"
+			  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+			  crossorigin="anonymous"></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js'></script>
   <script>
+    var messageBox=$('#message');
     var socket = io.connect('http://localhost:3000');
     socket.on('message', function (data) {
       console.log(data);
-      socket.emit('my other event', { my: 'data' });
+
+      if(data!=='denied'){
+        $('#verify').html('');
+        messageBox.html('<h3>'+data+' is Online!</h3>');
+        socket.emit('my other event', { my: 'data' });
+      }
+      else{
+        messageBox.innerHTML='';
+        messageBox.innerHTML='<h3>Get lost!</h3>';
+      }
+
     });
-    var btn = document.getElementById('btn');
-    btn.addEventListener('click',function(){
-      var username = document.getElementById('username').value.toUpperCase();
-      socket.emit('user',{username});
+    var username;
+    $('#btn').on('click',function(event){
+      event.preventDefault();
+      username = $('#username').val().toUpperCase();
+      socket.emit('user',username);
+    });
+
+    //==============Send Message event==================
+    var sendBtn = document.getElementById('submit-btn');
+    $('#submit-btn').on('click',function(event){
+      console.log('clicked');
+      event.preventDefault();
+      var message = $('#msg-body').val();
+      var sender = username;
+      socket.emit('on message',{message,sender});
+      messageBox.append('<div class="me-container"><p class="me"><strong>'+sender+': </strong>'+message+'</p></div>');
+    });
+
+    socket.on('client',function(data){
+      console.log(data);
+      if(data.sender===username){
+        messageBox.append('<div class="me-container"><p class="me"><strong>'+data.sender+': </strong>'+data.message+'</p></div>');
+      }
+      else{
+        messageBox.append('<div class="other-container"><p class="other"><strong>'+data.sender+': </strong>'+data.message+'</p></div>');
+      }
     });
 
   </script>

@@ -27,29 +27,25 @@ app.get('/',function(req,res){
 });
 
 
-
-
-
-connection.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
-  if (error) throw error;
-  console.log('The solution is: ', results[0].solution);
-});
-
 // connection.end();
 io.on('connection', function (socket) {
   socket.on('user', function(data){
-    if(data.username==='HIMAL'){
-      socket.username=data.username;
-      socket.emit('message',data.username + ' added');
+    if(data==='HIMAL' || data==='OTHER'){
+      socket.username=data;
+      socket.emit('message',data);
       console.log(data);
     }
     else{
-      socket.emit('message','user not accepted!!');
+      socket.emit('message','denied');
     }
-
   });
-  socket.on('my other event', function (data) {
+  socket.on('on message', function (data) {
     console.log(data);
+    connection.query('INSERT INTO single_convo (convo,user) VALUES ("'+data.message+'","'+data.sender+'")', function (error, results, fields) {
+      if (error) throw error;
+      console.log(results);
+      socket.broadcast.emit('client', {message:data.message,sender:data.sender});
+    });
   });
 });
 
