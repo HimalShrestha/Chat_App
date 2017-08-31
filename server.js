@@ -29,6 +29,10 @@ app.get('/',function(req,res){
 
 // connection.end();
 io.on('connection', function (socket) {
+  socket.on('emit other user',function(data){
+    console.log('on other user ', data);
+    socket.broadcast.emit('emit other user',data);
+  })
   socket.on('user', function(data){
     if(data==='HIMAL' || data==='OTHER'){
       socket.username=data;
@@ -47,6 +51,9 @@ io.on('connection', function (socket) {
       socket.broadcast.emit('client', {message:data.message,sender:data.sender});
     });
   });
+  socket.on('is typing',function(data){
+    socket.broadcast.emit('is typing', data);
+  })
 });
 
 server.listen(port,function(){

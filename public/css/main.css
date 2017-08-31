@@ -1,7 +1,16 @@
+body{
+  font-size: 16px;
+  position:relative;
+}
+*{
+  box-sizing: border-box;
+}
 #send-msg{
   position:fixed;
   bottom:0;
   left:0;
+  text-align: center;
+  width:100%;
 }
 .me{
   background: #dfdfdf;
@@ -24,4 +33,17 @@
   content:'';
   display: table;
   clear:both;
+}
+#msg-body{
+  min-width:300px;
+  height:60px;
+  padding:5px;
+  font-size: 1.2em;
+  resize: vertical;
+  border-radius: 5px;
+  border:1px solid #4ea4db;
+}
+#message{
+  padding-bottom: 200px;
+  
 }

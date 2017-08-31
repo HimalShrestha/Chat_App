@@ -23,8 +23,9 @@
 
   </div>
   <div id="send-msg">
+    <div id="is-typing"></div>
     <form>
-      <input type="text" id='msg-body'>
+      <textarea id='msg-body' rows="10"></textarea>
       <button id="submit-btn" type="submit">Send</button>
     </form>
   </div>
@@ -34,21 +35,27 @@
 			  crossorigin="anonymous"></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js'></script>
   <script>
+  $(document).ready(function(){
+
     var messageBox=$('#message');
-    var socket = io.connect('http://localhost:3000');
+    var socket = io.connect('http://192.168.10.202:3000');
     socket.on('message', function (data) {
       console.log(data);
 
       if(data!=='denied'){
         $('#verify').html('');
         messageBox.html('<h3>'+data+' is Online!</h3>');
-        socket.emit('my other event', { my: 'data' });
+        socket.emit('emit other user', data);
       }
       else{
-        messageBox.innerHTML='';
-        messageBox.innerHTML='<h3>Get lost!</h3>';
+        messageBox.html('');
+        messageBox.html('<h3>Get lost!</h3>');
       }
 
+    });
+    socket.on('emit other user',function(data){
+
+      messageBox.append('<h3>'+data+' is Online!</h3>');
     });
     var username;
     $('#btn').on('click',function(event){
@@ -58,18 +65,51 @@
     });
 
     //==============Send Message event==================
-    var sendBtn = document.getElementById('submit-btn');
     $('#submit-btn').on('click',function(event){
-      console.log('clicked');
       event.preventDefault();
+
       var message = $('#msg-body').val();
-      var sender = username;
-      socket.emit('on message',{message,sender});
-      messageBox.append('<div class="me-container"><p class="me"><strong>'+sender+': </strong>'+message+'</p></div>');
+      if(message===''){
+        return false;
+      }
+      else{
+        var sender = username;
+        $('#msg-body').val('').focus();
+        $('html, body').animate({
+            scrollTop: $(document).height()
+        }, 1000);
+        socket.emit('on message',{message,sender});
+        messageBox.append('<div class="me-container"><p class="me"><strong>'+sender+': </strong>'+message+'</p></div>');
+      }
+
+    });
+    //============or on enter===========
+    $('#msg-body').keydown(function(event) {
+      if(event.keyCode!= 8 || event.keyCode!= 46){
+        socket.emit('is typing',username+ ' is typing....');
+      }
+      if (event.keyCode == 13) {
+          $('#submit-btn').trigger('click');
+          return false;
+       }
+
+    });
+
+    socket.on('is typing',function(data){
+      $('#is-typing').html(data);
+      $('#is-typing').show();
+      var st=setTimeout(function(){
+        console.log('helloooooo');
+        $('#is-typing').hide();
+      },3000);
+      clearTimeout(st);
     });
 
     socket.on('client',function(data){
       console.log(data);
+      $('html, body').animate({
+          scrollTop: $(document).height()
+      }, 1000);
       if(data.sender===username){
         messageBox.append('<div class="me-container"><p class="me"><strong>'+data.sender+': </strong>'+data.message+'</p></div>');
       }
@@ -78,6 +118,7 @@
       }
     });
 
+  });
   </script>
 </body>
 </html>
