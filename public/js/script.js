@@ -3,7 +3,7 @@ $(document).ready(function(){
   var socket={};
   let username;
   $('#btn').on('click',function(event){
-    socket = io.connect('http://192.168.1.180:3000');
+    socket = io.connect('http://192.168.1.180:3001');
     event.preventDefault();
     username = $('#username').val();
     $('#verify').html('Hi '+username+' now you can chat with your friends');
@@ -29,13 +29,21 @@ $(document).ready(function(){
     //   }
     //
     // });
+    socket.on('all users',function(data){
+      console.log(data);
+      for(let item of data){
+        $('#active-users').append('<button data-id="'+item.id+'">'+item.name+'</button>');
+      }
+      // messageBox.append('<h3>'+data+' is Online!</h3>');
+    });
     socket.on('new user',function(data){
       console.log(data);
       $('#notification').append('<h3>'+data.name+' is Online!</h3>')
+      $('#active-users').append('<button data-id="'+data.id+'">'+data.name+'</button>');
       // messageBox.append('<h3>'+data+' is Online!</h3>');
     });
     socket.on('user disconnected',function(data){
-      alert(data);
+      $('#active-users [data-id="'+data+'"]').remove();
     });
 
 
@@ -63,21 +71,42 @@ $(document).ready(function(){
       if(event.keyCode!= 8 || event.keyCode!= 46){
         socket.emit('is typing',username+ ' is typing....');
       }
-      if (event.keyCode == 13) {
-          $('#submit-btn').trigger('click');
+      if (event.keyCode == 13||event.keyCode == 8 || event.keyCode == 46) {
+          socket.emit('not typing');
+          if (event.keyCode == 13) {
+              $('#submit-btn').trigger('click');
+              return false;
+           }
           return false;
        }
 
+
     });
+
+    //chat with a single user
+    $('#active-users').on('click','button',function(){
+      console.log($(this).attr('data-id'));
+      socket.emit('connect single',$(this).attr('data-id'));
+    });
+
+    socket.on('single chat',function(data){
+      alert(data.id,data.user,'wants to chat');
+    });
+
+
 
     socket.on('is typing',function(data){
       $('#is-typing').html(data);
       $('#is-typing').show();
-      var st=setTimeout(function(){
-        console.log('helloooooo');
-        $('#is-typing').hide();
-      },3000);
-      clearTimeout(st);
+      // var st=setTimeout(function(){
+      //   console.log('helloooooo');
+      //   $('#is-typing').hide();
+      // },3000);
+      // clearTimeout(st);
+    });
+
+    socket.on('finish typing',function(){
+      $('#is-typing').hide();
     });
 
     socket.on('client',function(data){

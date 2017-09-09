@@ -2,7 +2,7 @@ var express = require('express');
 var mysql = require('mysql');
 var path = require('path');
 var fs = require('fs');
-var port = 3000;
+var port = 3001;
 var app = require('express')();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
@@ -40,17 +40,30 @@ io.on('connection', function (socket) {
     connection.query('SELECT * FROM single_convo WHERE user="'+msg+'" ORDER BY id DESC LIMIT 5 ;', function (error, results, fields) {
       if (error) throw error;
       console.log(results);
+      console.log('before ',online_all);
+      //filter used to seperate the current user
+      var all_users = online_all.filter(item => item.id !== sockId);
+      socket.emit('all users',all_users);
       socket.broadcast.emit('new user',{id:sockId,name:msg,convo:results});
     });
 
   });
   socket.on('disconnect',function(){
     console.log('disonnected: '+sockId);
-    socket.broadcast.emit('user disconnected',socket.username);
+
+    online_all = online_all.filter(item => item.id !== sockId);
+    console.log('after ',online_all);
+    socket.broadcast.emit('user disconnected',sockId);
   })
   socket.on('emit other user',function(data){
     console.log('on other user ', data);
     socket.broadcast.emit('emit other user',data);
+  });
+  socket.on('not typing',function(){
+    socket.broadcast.emit('finish typing');
+  });
+  socket.on('connect single',function(data){
+    socket.broadcast.to(data).emit('single chat',{id:data,user:data});
   });
   // socket.on('user', function(id,data){
   //   console.log('envoked');
